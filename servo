@@ -1,0 +1,101 @@
+#The Python code for ALGUS-AG1 servo control#
+import time
+import socket
+import sys
+import serial
+import struct
+
+ALGUS = serial.Serial('/dev/ttyUSB0', 115200)
+
+while (1):
+    n=float(25)
+    UNO_1.write(bytes(b'%f'%n))
+    receive=UNO_1.readline()
+    print(receive)
+
+
+
+
+
+
+
+##non-Python code for something else##
+
+#include <TimerOne.h>
+#include <Encoder.h>
+#define A 2 //Encoder pins
+#define B 3
+Encoder encoder(2,3);
+//Config pins for motor control:
+int pinAIN1 = 9; //Direction
+int pinAIN2 = 8; //Direction
+int pinPWMA = 5; //Speed
+int pinSTBY = 4; //Stanby
+float receive;
+float tsamp = 0.01;
+float xung = 0;
+float last_xung = 0;
+float current_speed = 0;
+float ref_speed ; //The reference speed
+float error = 0;
+float last_error = 0;
+float PID,last_PID;
+float Kp =0.15 , Ki =0, Kd = 0.01;
+
+void dotocdo()
+{
+  if ( ref_speed >= 0)
+   {
+   digitalWrite(pinAIN1, 1);
+   digitalWrite(pinAIN2, 0);
+   analogWrite(pinPWMA, PID);
+   }
+
+   if ( ref_speed < 0)
+   {
+     digitalWrite(pinAIN1, 0);
+     digitalWrite(pinAIN2, 1);
+     analogWrite(pinPWMA, abs(PID));
+   }
+  float P;
+  static float I,D;
+  current_speed = 60*(xung-last_xung)/(tsamp*374*4);
+  last_xung = xung;
+  Serial.println(current_speed);
+
+  error=abs(ref_speed)-abs(current_speed);
+  P = Kp*error;
+  D = Kd*(error - last_error)/tsamp;
+  I = Ki*error*tsamp;
+  PID = last_PID + P + I + D;
+  last_error = error;
+  last_PID = PID;
+  if (PID >= 255) {PID = 255;}
+  if (PID <= -255) {PID = -255;}
+}
+void setup() {
+
+  Serial.begin(115200);
+  pinMode(pinPWMA, OUTPUT);
+  pinMode(pinAIN1, OUTPUT);
+  pinMode(pinAIN2, OUTPUT);
+  pinMode(pinSTBY, OUTPUT);
+  pinMode(A, INPUT);
+  pinMode(B, INPUT);
+  digitalWrite(pinSTBY, 1);
+  Timer1.initialize(10000);
+  Timer1.attachInterrupt(dotocdo);
+}
+
+void loop()
+{
+
+    if (Serial.available())
+    {
+     receive= Serial.parseFloat();
+     ref_speed=receive;
+     Serial.println(receive);
+    }
+   xung=encoder.read();
+
+}
