@@ -15,11 +15,7 @@ while (1):
 
 
 
-
-
-
-
-##non-Python code for something else##
+##MISC##
 
 #include <TimerOne.h>
 #include <Encoder.h>
