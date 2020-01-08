@@ -1,4 +1,3 @@
-#The Python code for ALGUS-AG1 servo control#
 import time
 import socket
 import sys
